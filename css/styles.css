@@ -445,3 +445,50 @@ textarea:focus, .composer input:focus, #nameInput:focus { outline: none; border-
 .steps li.is-done::after { background: var(--accent); }
 .steps li.is-done .step::before { background: var(--accent); border-color: var(--accent); color: #fff; }
 .step[aria-pressed="true"]::before { background: var(--grad); border-color: transparent; color: var(--on-sun); }
+
+/* ---------- logo: pięć gwiazdek wyciętych w równym rzędzie, po jednej na literę ---------- */
+.logo {
+  --star-img: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z'/%3E%3C/svg%3E");
+  display: inline-flex; gap: 0; font: 400 22px/1 'Dela Gothic One', 'Arial Black', Impact, sans-serif; letter-spacing: 0; color: var(--text);
+}
+.logo--lg { font-size: 44px; }
+.logo i {
+  display: inline-block; width: .84em; padding: .08em 0; font-style: normal; text-align: center;
+  -webkit-mask: var(--star-img) 50% 31% / .17em .17em no-repeat, linear-gradient(#000 0 0);
+  mask: var(--star-img) 50% 31% / .17em .17em no-repeat, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.logo i:last-child { background: linear-gradient(100deg, #FF6A48, #FFB21F); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---------- karta terapeuty ---------- */
+.tcard-slot { justify-content: center; text-align: center; }
+.tcard .btn-primary {
+  background: linear-gradient(100deg, var(--coral) 0%, var(--sun) 25%, var(--coral) 50%, var(--sun) 75%, var(--coral) 100%);
+  background-size: 200% 100%; animation: flow 6s linear infinite;
+}
+@keyframes flow { to { background-position: 100% 0; } }
+.matching-n { padding: 0 .1em; }
+
+/* ---------- kalendarz tygodniowy ---------- */
+.week-stat { font-size: 15px; color: var(--muted); }
+.week-stat b { color: var(--text); font-weight: 600; }
+.week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 10px 6px; border-radius: var(--r); background: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+.wcol { display: flex; flex-direction: column; align-items: stretch; gap: 5px; min-width: 0; }
+.wday { display: flex; flex-direction: column; align-items: center; gap: 1px; padding-bottom: 6px; margin-bottom: 2px; border-bottom: 1px solid var(--line); }
+.wday small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.wday b { font: 800 17px/1 var(--display); }
+.wslot { min-height: 34px; display: grid; place-items: center; border-radius: 9px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; background: #E7E5FB; color: var(--accent); }
+button.wslot:hover { background: #D8D5F8; }
+.wslot[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.wslot.is-taken { background: none; color: var(--muted); font-weight: 400; opacity: .75; }
+.wnone { text-align: center; color: var(--muted); padding-top: 8px; }
+
+/* ---------- numer telefonu i kod ---------- */
+.vform { display: flex; flex-direction: column; gap: 10px; }
+.phone { display: flex; align-items: center; border-radius: var(--r); background: var(--ink); border: 1.5px solid var(--line); }
+.phone:focus-within { border-color: var(--accent); }
+.phone span { padding: 0 4px 0 16px; font-weight: 600; color: var(--muted); }
+.phone input { flex: 1; min-width: 0; padding: 15px 14px 15px 6px; border: 0; background: none; font-size: 20px; font-weight: 600; letter-spacing: .04em; }
+.phone input:focus { outline: none; }
+.code { width: 100%; padding: 14px; border-radius: var(--r); background: var(--ink); border: 1.5px solid var(--line); font: 800 30px/1 var(--display); letter-spacing: .5em; text-align: center; }
+.code:focus { outline: none; border-color: var(--accent); }

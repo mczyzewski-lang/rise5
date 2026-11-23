@@ -440,6 +440,17 @@
     }
     return (t._slots = days);
   }
+  // najbliższe 7 dni ze wszystkimi godzinami; free=false to termin już zajęty
+  function weekFor(t) {
+    const out = [];
+    for (let off = 1; off <= 7; off++) {
+      const date = new Date(today.getTime() + off * DAY), wd = date.getDay(), weekend = wd === 0 || wd === 6;
+      if (weekend && !t.weekends) { out.push({ date, slots: [] }); continue; }
+      const hours = weekend ? [10, 11, 12, 13] : t.evenings ? [16, 17, 18, 19, 20] : [9, 10, 11, 13, 14, 15];
+      out.push({ date, slots: hours.map(h => ({ h, free: off >= t.firstDay && hash(t.id + off + ':' + h) % 5 > 1 })) });
+    }
+    return out;
+  }
   const firstSlot = t => { const d = slotsFor(t)[0]; return d.date.getTime() + d.hours[0] * 3600000; };
   const fmtDay = new Intl.DateTimeFormat('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' });
   const fmtWd = new Intl.DateTimeFormat('pl-PL', { weekday: 'short' });
@@ -604,7 +615,8 @@
   /* ---------- konto: wizyty i czat ---------- */
   function openAccount(tab, focusBooking) {
     S.tab = tab; S.focusBooking = !!focusBooking;
-    S.pick = { day: 0, hour: null };
+    S.pick = { date: null, hour: null };
+    S.verify = null;
     show('app');
     renderAccount();
   }
@@ -617,6 +629,7 @@
     const booked = S.booking && (!S.focusBooking || S.booking.tid === t.id) ? S.booking : null;
     const bt = booked && THERAPISTS.find(x => x.id === booked.tid);
     // rezerwacja prosto z feedu: bez dolnego menu, żeby nic nie odciągało od terminu
+    if (S.verify) { renderVerify(); return; }
     const hideTabs = S.focusBooking && !booked;
     $('#tabs').hidden = hideTabs;
     $$('#tabs button').forEach(b => b.setAttribute('aria-current', String(b.dataset.tab === S.tab)));
@@ -659,28 +672,90 @@
       return;
     }
 
-    const days = slotsFor(t), day = days[S.pick.day];
+    // tydzień jak w kalendarzu lekarza: zajęte godziny przekreślone, wolne do kliknięcia
+    const week = weekFor(t), all = week.reduce((acc, d) => acc.concat(d.slots), []);
+    const taken = all.filter(x => !x.free).length;
     body.innerHTML = `<h1>Wybierz termin pierwszej sesji</h1>
       ${miniCard(t)}
-      <p class="label">Dzień</p>
-      <div class="days">${days.map((d, i) => `<button type="button" class="day" data-day="${i}" aria-pressed="${i === S.pick.day}"><small>${fmtWd.format(d.date)}</small><b>${d.date.getDate()}</b></button>`).join('')}</div>
-      <p class="label">Godzina</p>
-      <div class="slots">${day.hours.map(h => `<button type="button" class="slot" data-hour="${h}" aria-pressed="${h === S.pick.hour}">${h}:00</button>`).join('')}</div>
-      <button class="btn btn-primary" type="button" data-act="confirm" ${S.pick.hour == null ? 'disabled' : ''}>${S.pick.hour == null ? 'Wybierz godzinę' : 'Zarezerwuj: ' + slotLabel(day.date, S.pick.hour)}</button>`;
+      <p class="week-stat"><b>${taken} z ${all.length}</b> terminów w najbliższym tygodniu jest już zajętych.</p>
+      <div class="week">${week.map(d => `<div class="wcol">
+        <div class="wday"><small>${fmtWd.format(d.date)}</small><b>${d.date.getDate()}</b></div>
+        ${d.slots.length ? d.slots.map(x => x.free
+          ? `<button type="button" class="wslot" data-date="${d.date.getTime()}" data-hour="${x.h}" aria-pressed="${S.pick.date === d.date.getTime() && S.pick.hour === x.h}">${x.h}:00</button>`
+          : `<span class="wslot is-taken" aria-label="${x.h}:00, zajęte"><s>${x.h}:00</s></span>`).join('') : '<span class="wnone" aria-label="nie przyjmuje">–</span>'}
+      </div>`).join('')}</div>
+      <p class="note">Przekreślone godziny są już zarezerwowane.</p>
+      <button class="btn btn-primary" type="button" data-act="confirm" ${S.pick.hour == null ? 'disabled' : ''}>${S.pick.hour == null ? 'Wybierz godzinę' : 'Zarezerwuj: ' + slotLabel(new Date(S.pick.date), S.pick.hour)}</button>`;
   }
+
+  /* ---------- numer telefonu: pytamy dopiero przy rezerwacji albo pierwszej wiadomości ---------- */
+  function requirePhone(reason, action) {
+    if (S.verified) action();
+    else S.verify = { step: 'phone', reason, action };
+  }
+  const prettyPhone = () => '+48 ' + S.phone.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
+  function updateSub() {
+    $('#accSub').textContent = S.verified ? 'Konto: ' + prettyPhone() : S.name ? 'Dodaj zdjęcie, żeby dokończyć profil' : 'Uzupełnij profil';
+  }
+  function renderVerify() {
+    const v = S.verify, t = S.therapist, body = $('#accBody'), book = v.reason === 'book';
+    $('#tabs').hidden = true; $('#composer').hidden = true;
+    body.innerHTML = v.step === 'phone'
+      ? `<h1>${book ? 'Potwierdź rezerwację numerem telefonu' : 'Podaj numer, żeby wysłać wiadomość'}</h1>
+         <p class="lead">${book
+           ? `Wyślemy SMS z potwierdzeniem i przypomnieniem o sesji: ${slotLabel(new Date(S.pick.date), S.pick.hour)}.`
+           : `Damy znać SMS-em, gdy ${esc(t.name)} odpisze.`} Numer jest też Twoim loginem, bez hasła.</p>
+         ${miniCard(t)}
+         <form class="vform" id="phoneForm" novalidate>
+           <label class="label" for="phoneInput">Numer telefonu</label>
+           <div class="phone"><span>+48</span><input id="phoneInput" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="600 100 200" maxlength="11" value="${esc(S.phone || '')}"></div>
+           <p class="error" id="verifyErr" hidden>Wpisz 9 cyfr numeru telefonu.</p>
+           <button class="btn btn-primary" type="submit">Wyślij kod SMS</button>
+           <p class="note">Kontynuując, akceptujesz regulamin i politykę prywatności.</p>
+         </form>
+         <button class="btn btn-link" type="button" data-act="verify-cancel">Wróć</button>`
+      : `<h1>Wpisz kod z SMS-a</h1>
+         <p class="lead">Wysłaliśmy 4-cyfrowy kod na numer ${prettyPhone()}.</p>
+         <form class="vform" id="codeForm" novalidate>
+           <label class="label" for="codeInput">Kod z SMS-a</label>
+           <input id="codeInput" class="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="4" placeholder="••••">
+           <p class="error" id="verifyErr" hidden>Kod ma 4 cyfry.</p>
+           <button class="btn btn-primary" type="submit">${book ? 'Potwierdź rezerwację' : 'Wyślij wiadomość'}</button>
+           <p class="note">Prototyp: SMS nie jest wysyłany. Wpisz dowolne 4 cyfry.</p>
+         </form>
+         <button class="btn btn-link" type="button" data-act="verify-back">Zmień numer</button>`;
+    const input = body.querySelector('input'); if (input) input.focus();
+  }
+  $('#accBody').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = S.verify; if (!v) return;
+    const digits = e.target.querySelector('input').value.replace(/\D/g, '');
+    if (e.target.id === 'phoneForm') {
+      if (digits.length !== 9) { $('#verifyErr').hidden = false; return; }
+      S.phone = digits; v.step = 'code';
+    } else {
+      if (digits.length !== 4) { $('#verifyErr').hidden = false; return; }
+      S.verified = true; S.verify = null; v.action(); updateSub();
+    }
+    renderAccount();
+  });
 
   $('#accBody').addEventListener('click', e => {
     const t = S.therapist;
-    const day = e.target.closest('.day'), slot = e.target.closest('.slot'), act = e.target.closest('[data-act]'), st = e.target.closest('.starter');
-    if (day) { S.pick = { day: +day.dataset.day, hour: null }; renderAccount(); }
-    else if (slot) { S.pick.hour = +slot.dataset.hour; renderAccount(); }
+    const slot = e.target.closest('button.wslot'), act = e.target.closest('[data-act]'), st = e.target.closest('.starter');
+    if (slot) { S.pick = { date: +slot.dataset.date, hour: +slot.dataset.hour }; renderAccount(); }
     else if (st) { $('#msgInput').value = st.textContent; $('#msgInput').focus(); }
     else if (act) {
       const a = act.dataset.act;
       const booked = S.booking && THERAPISTS.find(x => x.id === S.booking.tid);
-      if (a === 'confirm') { S.booking = { tid: t.id, date: slotsFor(t)[S.pick.day].date, hour: S.pick.hour }; S.focusBooking = false; toast('Zarezerwowano'); }
+      if (a === 'confirm') {
+        const pick = { tid: t.id, date: new Date(S.pick.date), hour: S.pick.hour };
+        requirePhone('book', () => { S.booking = pick; S.focusBooking = false; toast('Zarezerwowano'); });
+      }
+      if (a === 'verify-cancel') S.verify = null;
+      if (a === 'verify-back') S.verify.step = 'phone';
       if (a === 'start-booking') S.focusBooking = true;
-      if (a === 'rebook') { S.therapist = booked; S.booking = null; S.focusBooking = true; S.pick = { day: 0, hour: null }; }
+      if (a === 'rebook') { S.therapist = booked; S.booking = null; S.focusBooking = true; S.pick = { date: null, hour: null }; }
       if (a === 'to-chat') { S.therapist = booked; S.tab = 'chat'; }
       renderAccount();
     }
@@ -694,12 +769,15 @@
   $('#composer').addEventListener('submit', e => {
     e.preventDefault();
     const input = $('#msgInput'), text = input.value.trim(); if (!text) return;
-    const now = new Date();
-    (S.msgs[S.therapist.id] = S.msgs[S.therapist.id] || []).push({ text, time: now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0') });
+    const tid = S.therapist.id;
+    requirePhone('chat', () => {
+      const now = new Date();
+      (S.msgs[tid] = S.msgs[tid] || []).push({ text, time: now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0') });
+    });
     input.value = '';
     renderAccount();
   });
-  $('#accClose').addEventListener('click', () => show('feed'));
+  $('#accClose').addEventListener('click', () => { S.verify = null; show('feed'); });
 
   // imię i awatar do uzupełnienia
   function editName() {
@@ -711,7 +789,7 @@
     S.name = input.value.trim();
     input.hidden = true; $('#nameBtn').hidden = false;
     $('#nameBtn').textContent = S.name || 'Twoje imię';
-    $('#accSub').textContent = S.name ? 'Dodaj zdjęcie, żeby dokończyć profil' : 'Uzupełnij profil';
+    updateSub();
   }
   $('#nameBtn').addEventListener('click', editName);
   $('#avatarBtn').addEventListener('click', editName);
