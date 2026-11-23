@@ -4,8 +4,12 @@
       <stop offset="0" stop-color="#FF7A5C"/>
       <stop offset="1" stop-color="#FFC533"/>
     </linearGradient>
+    <!-- gwiazdka wycięta z cyfry: brzuszek piątki ma kształt gwiazdki -->
+    <mask id="star">
+      <rect width="96" height="96" fill="#fff"/>
+      <path transform="translate(35.7 41.7) scale(1.108)" fill="#000" d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z"/>
+    </mask>
   </defs>
-  <rect width="96" height="96" rx="26" fill="url(#sun)"/>
-  <text x="44" y="72" text-anchor="middle" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="68" fill="#1A1030">5</text>
-  <path fill="#1A1030" d="M74 12l3.1 6.6 7.2.9-5.3 5 1.4 7.1L74 28.1l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z"/>
+  <rect width="96" height="96" rx="28" fill="url(#sun)"/>
+  <text mask="url(#star)" x="48" y="74" text-anchor="middle" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="74" fill="#1A1030">5</text>
 </svg>

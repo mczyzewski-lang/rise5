@@ -76,9 +76,14 @@ button { cursor: pointer; border: 0; background: none; padding: 0; }
   width: 1.3em; height: 1.3em; border-radius: .38em;
   background: var(--grad); color: var(--on-sun);
 }
-.logo-five::after {
-  content: ""; position: absolute; top: -.2em; right: -.26em; width: .46em; height: .46em; background: var(--sun);
-  clip-path: polygon(50% 0, 62% 35%, 98% 36%, 69% 58%, 80% 94%, 50% 72%, 20% 94%, 31% 58%, 2% 36%, 38% 35%);
+/* Brzuszek piątki ma kształt gwiazdki: cyfra jest rysowana w ::before i to z niej wycinamy gwiazdkę,
+   więc przez otwór widać gradient kafelka. */
+.logo-five { color: transparent; }
+.logo-five::before {
+  content: "5"; position: absolute; inset: 0; display: grid; place-items: center; color: var(--on-sun);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z'/%3E%3C/svg%3E") 51% 57% / .36em .36em no-repeat, linear-gradient(#000 0 0);
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z'/%3E%3C/svg%3E") 51% 57% / .36em .36em no-repeat, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
 }
 .logo--lg { font-size: 44px; }
 

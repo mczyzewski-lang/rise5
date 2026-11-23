@@ -4,11 +4,15 @@
       <stop offset="0" stop-color="#FF7A5C"/>
       <stop offset="1" stop-color="#FFC533"/>
     </linearGradient>
+    <!-- gwiazdka wycięta z cyfry: brzuszek piątki ma kształt gwiazdki -->
+    <mask id="star">
+      <rect width="300" height="120" fill="#fff"/>
+      <path transform="translate(192.300 41.700) scale(.75)" fill="#000" d="M12 1.5l3.1 6.6 7.2.9-5.3 5 1.4 7.1L12 17.6l-6.4 3.5 1.4-7.1-5.3-5 7.2-.9z"/>
+    </mask>
   </defs>
-  <rect width="300" height="120" rx="24" fill="#14112B"/>
-  <text x="24" y="70" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="64" letter-spacing="-2" fill="#F5F2FF">Rise</text>
-  <rect x="168" y="16" width="62" height="62" rx="18" fill="url(#sun)"/>
-  <text x="197" y="66" text-anchor="middle" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="50" fill="#1A1030">5</text>
-  <path fill="#FFC533" d="M246 14l3.4 7.2 7.9 1-5.8 5.5 1.5 7.8-7-3.8-7 3.8 1.5-7.8-5.8-5.5 7.9-1z"/>
-  <text x="25" y="102" font-family="'Instrument Sans',Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="2.4" fill="#B4AED6">POCZUJ SIĘ NA 5</text>
+  <rect width="300" height="120" rx="24" fill="#FFFFFF"/>
+  <text x="24" y="70" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="64" letter-spacing="-2" fill="#16143A">Rise</text>
+  <rect x="168" y="14" width="65" height="65" rx="19" fill="url(#sun)"/>
+  <text mask="url(#star)" x="200.500" y="64" text-anchor="middle" font-family="'Bricolage Grotesque','Arial Black',Arial,sans-serif" font-weight="800" font-size="50" fill="#1A1030">5</text>
+  <text x="25" y="104" font-family="'Instrument Sans',Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="2.4" fill="#3A31C8">POCZUJ SIĘ NA 5</text>
 </svg>
