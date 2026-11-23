@@ -41,7 +41,7 @@
   function startQuiz(fill) {
     S.fill = fill || null;
     S.qIndex = 0;
-    if (!fill) S.answers = {};
+    if (!fill) { S.answers = {}; $('#quizCount').textContent = CONFIG.totalTherapists; }
     show('quiz');
     renderQuestion();
   }
@@ -179,6 +179,21 @@
     ? QUESTIONS.filter(q => S.fill.includes(q.id))
     : QUESTIONS.filter(q => !q.when || q.when(S.answers));
 
+  // licznik „pasuje teraz": liczba zjeżdża do nowej wartości po każdej odpowiedzi
+  let countRaf;
+  function setCount(n) {
+    const el = $('#quizCount'), from = parseInt(el.textContent, 10) || n;
+    cancelAnimationFrame(countRaf);
+    if (reducedMotion || from === n) { el.textContent = n; return; }
+    el.classList.remove('is-drop'); void el.offsetWidth; el.classList.add('is-drop');
+    const t0 = performance.now(), dur = 700;
+    (function tick(now) {
+      const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (n - from) * e);
+      if (p < 1) countRaf = requestAnimationFrame(tick);
+    })(t0);
+  }
+
   function renderQuestion() {
     const list = activeQuestions();
     const q = list[S.qIndex];
@@ -200,7 +215,7 @@
     $('#stage2 b').style.width = (s2.length ? done2 / s2.length * 100 : 0) + '%';
     $('#stage1').classList.toggle('is-on', q.stage === 1);
     $('#stage2').classList.toggle('is-on', q.stage === 2);
-    $('#quizCount').textContent = countFor(S.answers);
+    setCount(countFor(S.answers));
 
     $('#qSkip').hidden = !q.skippable;
     const next = $('#qNext');
@@ -401,6 +416,10 @@
     const day = diff === 0 ? 'dziś' : diff === 1 ? 'jutro' : diff === 2 ? 'pojutrze' : fmtDay.format(date);
     return `${day}, ${hour}:00`;
   }
+  function inDays(date) {
+    const diff = Math.round((date.getTime() - today.getTime()) / DAY);
+    return diff === 0 ? 'dziś' : diff === 1 ? 'jutro' : `za ${diff} dni`;
+  }
   const role = t => t.gender === 'f' ? 'psychoterapeutka' : 'psychoterapeuta';
 
   /* ---------- ranking ---------- */
@@ -478,10 +497,10 @@
           <h2>${esc(t.name)}, ${t.age}</h2>
           <p class="tcard-role">${role(t)} · ${esc(mods)}</p>
           <p class="tcard-bio">${esc(t.bio)}</p>
-          ${x.why.length ? `<ul class="chips">${x.why.slice(0, 4).map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
-          <p class="tcard-slot">Najbliższy termin: ${slotLabel(d.date, d.hours[0])}</p>
+          ${x.why.length ? `<ul class="chips chips--scroll">${x.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+          <p class="tcard-slot"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>Najbliższy termin <b>${inDays(d.date)}</b> · ${fmtDay.format(d.date)}, ${d.hours[0]}:00</span></p>
           <button class="btn btn-primary" type="button" data-act="book">Zarezerwuj pierwszą sesję</button>
-          <button class="btn btn-ghost" type="button" data-act="chat">Napisz do terapeuty</button>
+          <button class="btn btn-ghost" type="button" data-act="chat"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>Napisz bezpłatnie do terapeuty</button>
         </div>
       </article>`;
     }).join('');
@@ -490,9 +509,55 @@
     $$('.seg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sort === S.sort)));
   }
   $('.seg').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b || b.dataset.sort === S.sort) return;
-    S.sort = b.dataset.sort; renderFeed();
+    const b = e.target.closest('button'); if (b) switchSort(b.dataset.sort);
   });
+
+  // Zmiana sortowania: oddalenie do siatki wszystkich, przetasowanie, zbliżenie na nowego pierwszego.
+  async function switchSort(sort) {
+    if (S.animating || sort === S.sort) return;
+    const feed = $('#feedList'), screen = $('#s-feed');
+    const sorted = key => S.ranked.slice().sort((x, y) => x[key] - y[key]);
+    const oldKey = S.sort === 'match' ? 'matchRank' : 'availRank';
+    const newKey = sort === 'match' ? 'matchRank' : 'availRank';
+    const oldList = sorted(oldKey), newList = sorted(newKey);
+    const cur = Math.min(oldList.length - 1, Math.round(feed.scrollTop / feed.clientHeight));
+    S.sort = sort;
+    $$('.seg button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.sort === sort)));
+    if (reducedMotion || !feed.animate) { renderFeed(); return; }
+
+    S.animating = true;
+    const ov = document.createElement('div');
+    ov.className = 'feed-grid';
+    ov.innerHTML = oldList.map(x => `<div class="gt" data-id="${x.t.id}" style="background-image:url('${x.t.photo}')"><b>#${x[oldKey]}</b><span>${esc(x.t.name)}</span></div>`).join('');
+    screen.appendChild(ov);
+    const W = ov.clientWidth, H = ov.clientHeight;
+    const tile = id => ov.querySelector(`[data-id="${id}"]`);
+    const zoom = el => {
+      const k = Math.max(W / el.offsetWidth, H / el.offsetHeight);
+      return `translate(${W / 2 - k * (el.offsetLeft + el.offsetWidth / 2)}px, ${H / 2 - k * (el.offsetTop + el.offsetHeight / 2)}px) scale(${k})`;
+    };
+    const ease = 'cubic-bezier(.3,.7,.2,1)';
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    try {
+      // 1. oddalenie od bieżącej karty
+      await ov.animate([{ transform: zoom(tile(oldList[cur].t.id)) }, { transform: 'none' }], { duration: 520, easing: ease }).finished;
+      await wait(120);
+      // 2. przetasowanie (FLIP)
+      const tiles = $$('.gt', ov), before = new Map(tiles.map(t => [t, t.getBoundingClientRect()]));
+      newList.forEach(x => { const t = tile(x.t.id); ov.appendChild(t); t.querySelector('b').textContent = '#' + x[newKey]; });
+      await Promise.all(tiles.map(t => {
+        const a = before.get(t), b = t.getBoundingClientRect();
+        return t.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: 'none' }], { duration: 560, easing: ease }).finished;
+      }));
+      renderFeed();
+      await wait(180);
+      // 3. zbliżenie na nowego pierwszego
+      await ov.animate([{ transform: 'none' }, { transform: zoom(tile(newList[0].t.id)) }], { duration: 520, easing: 'cubic-bezier(.6,0,.8,.4)', fill: 'forwards' }).finished;
+      await ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, fill: 'forwards' }).finished;
+    } catch (e) { renderFeed(); }
+    screen.removeChild(ov);
+    S.animating = false;
+  }
   $('#feedList').addEventListener('scroll', () => {
     const f = $('#feedList'), i = Math.round(f.scrollTop / f.clientHeight);
     $$('#feedPos i').forEach((d, k) => d.classList.toggle('is-on', k === i));
@@ -545,7 +610,7 @@
           <span class="visit-ok">✓ Pierwsza sesja zarezerwowana</span>
           <span class="visit-when">${fmtLong.format(booked.date)}, ${booked.hour}:00</span>
           ${miniCard(bt)}
-          <button class="btn btn-ghost" type="button" data-act="to-chat">Napisz do terapeuty</button>
+          <button class="btn btn-ghost" type="button" data-act="to-chat">Napisz bezpłatnie do terapeuty</button>
         </div>
         <button class="btn btn-link" type="button" data-act="rebook">Zmień termin</button>`;
       return;

@@ -360,3 +360,38 @@ textarea:focus, .composer input:focus, #nameInput:focus { outline: none; border-
 .how summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
 .how details p { padding-bottom: 12px; font-size: 15px; }
 .how-end { align-items: flex-start; }
+
+/* ---------- animacje i detale kart ---------- */
+.counter b { display: inline-block; margin: 0 3px; }
+.counter b.is-drop { animation: drop .7s ease-out; }
+@keyframes drop { 0% { transform: translateY(-4px) scale(1.3); color: var(--coral); } 100% { transform: none; } }
+
+.rank.is-on { animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 197, 51, .55); transform: scale(1); }
+  50% { box-shadow: 0 0 0 7px rgba(255, 197, 51, 0); transform: scale(1.04); }
+}
+
+.chips--scroll {
+  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain;
+  margin: 0 calc(-1 * var(--gut-r)) 0 calc(-1 * var(--gut-l)); padding: 0 var(--gut-r) 0 var(--gut-l);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 16px, #000 calc(100% - 28px), transparent 100%);
+}
+.chips--scroll::-webkit-scrollbar { display: none; }
+.chips--scroll li { flex: none; white-space: nowrap; }
+
+.tcard-slot { display: flex; align-items: center; gap: 8px; }
+.tcard-slot svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tcard-slot b { font-weight: 600; }
+.btn svg { flex: none; width: 20px; height: 20px; margin-right: 8px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.feed-grid {
+  position: absolute; inset: 0; z-index: 4; transform-origin: 0 0; background: var(--night);
+  display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, 1fr); gap: 6px;
+  padding: 66px var(--gut-r) 12px var(--gut-l);
+}
+.gt { position: relative; border-radius: 14px; background-size: cover; background-position: 50% 12%; overflow: hidden; }
+.gt::after { content: ""; position: absolute; inset: 50% 0 0; background: linear-gradient(to bottom, transparent, rgba(14, 11, 32, .85)); }
+.gt b { position: absolute; z-index: 1; top: 8px; left: 8px; padding: 3px 9px; border-radius: 999px; background: var(--sun); color: var(--on-sun); font-size: 13px; font-variant-numeric: tabular-nums; }
+.gt span { position: absolute; z-index: 1; left: 10px; bottom: 8px; font: 800 17px/1 var(--display); }
