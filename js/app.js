@@ -66,8 +66,12 @@
   /* ---------- landing: mozaika i krążek odsłaniający twarze ---------- */
   function initHero() {
     const hero = $('#hero');
-    const order = [0, 4, 1, 5, 2, 6, 3, 7, 4];
-    const tiles = order.map(i => `<i style="background-image:url('${THERAPISTS[i].photo}')"></i>`).join('');
+    // 5 x 6 kafelków; krok 3 w poziomie i 2 w pionie, żeby ta sama twarz nie sąsiadowała ze sobą
+    const COLS = 5, ROWS = 6;
+    let tiles = '';
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      tiles += `<i style="background-image:url('${THERAPISTS[(c * 3 + r * 2) % THERAPISTS.length].photo}')"></i>`;
+    }
     $$('.mosaic', hero).forEach(m => { m.innerHTML = tiles; });
     $('#gScore').textContent = CONFIG.googleRating;
     $('#mediaList').innerHTML = Array.from({ length: CONFIG.mediaSlots }, () => '<li>logo</li>').join('');
@@ -80,8 +84,8 @@
       const card = $('#heroCard');
       const top = card.offsetTop, bottom = top + card.offsetHeight;
       targets = [];
-      for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
-        const x = (c + .5) * w / 3, y = (r + .33) * h / 3;
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+        const x = (c + .5) * w / COLS, y = (r + .36) * h / ROWS;
         if (y < top - 34 || (y > bottom + 34 && y < h - 96)) targets.push({ x, y });
       }
       if (!targets.length) targets = [{ x: w / 2, y: 60 }];
@@ -98,7 +102,7 @@
     }
     function frame(t) {
       if ($('#s-landing').hidden) { requestAnimationFrame(frame); return; }
-      if (t > userUntil && t - lastHop > 2300) {
+      if (t > userUntil && t - lastHop > 1500) {
         ti = (ti + 1) % targets.length; target = targets[ti]; lastHop = t;
       }
       pos.x += (target.x - pos.x) * .055;
@@ -139,7 +143,7 @@
         const on = place[i] < lit;
         ctx.beginPath();
         ctx.arc((i % cols + .5) * cell, (Math.floor(i / cols) + .5) * cell, on ? cell * (lit <= 8 ? .46 : .32) : cell * .2, 0, Math.PI * 2);
-        ctx.fillStyle = on ? '#FFC533' : 'rgba(255,255,255,.16)';
+        ctx.fillStyle = on ? '#3A31C8' : 'rgba(22,20,58,.14)';
         ctx.fill();
       }
     }
