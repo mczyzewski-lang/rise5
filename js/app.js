@@ -147,14 +147,43 @@
         ctx.fill();
       }
     }
+    // Kroki przeskakują same (833 → 96 → 8 → 1 i od nowa), gdy sekcja jest na ekranie.
+    const steps = $$('#steps .step');
+    let cur = 0, tween, timer, visible = false, holdUntil = 0;
+    function setStep(i) {
+      cur = i;
+      const b = steps[i], to = +b.dataset.n, from = lit;
+      steps.forEach(s => s.setAttribute('aria-pressed', String(s === b)));
+      $('#dotsLabel').textContent = b.dataset.label;
+      cancelAnimationFrame(tween);
+      if (reducedMotion || from === to) { lit = to; $('#dotsCount').textContent = to; draw(); return; }
+      const t0 = performance.now(), dur = 900;
+      (function tick(now) {
+        const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        lit = Math.round(from + (to - from) * e);
+        $('#dotsCount').textContent = lit;
+        draw();
+        if (p < 1) tween = requestAnimationFrame(tick);
+      })(t0);
+    }
+    function schedule() {
+      clearTimeout(timer);
+      if (reducedMotion || !visible) return;
+      const wait = Math.max(cur === steps.length - 1 ? 3400 : 2400, holdUntil - performance.now());
+      timer = setTimeout(() => {
+        if (!$('#s-landing').hidden) setStep((cur + 1) % steps.length);
+        schedule();
+      }, wait);
+    }
     $('#steps').addEventListener('click', e => {
       const b = e.target.closest('.step'); if (!b) return;
-      $$('.step').forEach(s => s.setAttribute('aria-pressed', String(s === b)));
-      lit = +b.dataset.n;
-      $('#dotsCount').textContent = b.dataset.n;
-      $('#dotsLabel').textContent = b.dataset.label;
-      draw();
+      holdUntil = performance.now() + 8000;     // po kliknięciu dajemy czas na przeczytanie
+      setStep(steps.indexOf(b));
+      schedule();
     });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(en => { visible = en[0].isIntersecting; schedule(); }, { threshold: .35 }).observe($('.funnel'));
+    }
     window.addEventListener('resize', draw);
     draw();
   }

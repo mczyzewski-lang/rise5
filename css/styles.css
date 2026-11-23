@@ -414,3 +414,6 @@ textarea:focus, .composer input:focus, #nameInput:focus { outline: none; border-
 .screen.feed .tmini { box-shadow: none; }
 .btn-primary { box-shadow: 0 6px 18px rgba(255, 122, 92, .28); }
 .media .eyebrow { color: var(--text); }
+
+.step { transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease; }
+.dots-caption b { display: inline-block; min-width: 2.2ch; }
