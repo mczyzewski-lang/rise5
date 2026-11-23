@@ -28,8 +28,22 @@
     if (push !== false && S.history[S.history.length - 1] !== id) S.history.push(id);
     const el = $('#s-' + id);
     if (el) el.scrollTop = 0;
-    if (id === 'quiz') { S.qIndex = 0; S.answers = {}; renderQuestion(); }
     if (id === 'prompt') $('#gptError').hidden = true;
+    setHash(id === 'how' ? 'jak-dziala' : '');
+  }
+  function setHash(h) {
+    try {
+      if ((location.hash || '').replace('#', '') === h) return;
+      if (h) location.hash = h;
+      else if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    } catch (e) { /* podgląd bez dostępu do historii */ }
+  }
+  function startQuiz(fill) {
+    S.fill = fill || null;
+    S.qIndex = 0;
+    if (!fill) S.answers = {};
+    show('quiz');
+    renderQuestion();
   }
   function back() {
     S.history.pop();
@@ -37,7 +51,7 @@
   }
   document.addEventListener('click', e => {
     const go = e.target.closest('[data-go]');
-    if (go) { show(go.dataset.go); return; }
+    if (go) { if (go.dataset.go === 'quiz') startQuiz(); else show(go.dataset.go); return; }
     if (e.target.closest('[data-back]')) back();
   });
 
@@ -155,11 +169,15 @@
     };
     Object.keys(f).forEach(k => { if (a[k] && f[k][a[k]]) n *= f[k][a[k]]; });
     if (a.values) n *= Math.pow(.55, a.values.length);
+    if (a.contexts) n *= Math.pow(.7, a.contexts.length);
     return Math.max(CONFIG.shortlist, Math.round(n));
   }
 
   /* ---------- quiz ---------- */
-  const activeQuestions = () => QUESTIONS.filter(q => !q.when || q.when(S.answers));
+  // S.fill: po wklejeniu odpowiedzi czatu dopytujemy tylko o brakujące pola
+  const activeQuestions = () => S.fill
+    ? QUESTIONS.filter(q => S.fill.includes(q.id))
+    : QUESTIONS.filter(q => !q.when || q.when(S.answers));
 
   function renderQuestion() {
     const list = activeQuestions();
@@ -178,8 +196,8 @@
     const s1 = list.filter(x => x.stage === 1), s2 = list.filter(x => x.stage === 2);
     const done1 = q.stage === 1 ? s1.indexOf(q) : s1.length;
     const done2 = q.stage === 2 ? s2.indexOf(q) : 0;
-    $('#stage1 b').style.width = (done1 / s1.length * 100) + '%';
-    $('#stage2 b').style.width = (done2 / s2.length * 100) + '%';
+    $('#stage1 b').style.width = (s1.length ? done1 / s1.length * 100 : 100) + '%';
+    $('#stage2 b').style.width = (s2.length ? done2 / s2.length * 100 : 0) + '%';
     $('#stage1').classList.toggle('is-on', q.stage === 1);
     $('#stage2').classList.toggle('is-on', q.stage === 2);
     $('#quizCount').textContent = countFor(S.answers);
@@ -207,11 +225,17 @@
       else if (q.max && cur.size >= q.max) { toast('Wybierz najwyżej ' + q.max); return; }
       else cur.add(v);
       S.answers[q.id] = Array.from(cur);
+      if (q.id === 'feel') {
+        // odczucia tłumaczymy na obszary problemów, najwyżej 3
+        const ps = [];
+        FEELINGS.filter(f => cur.has(f.v)).forEach(f => f.problems.forEach(x => { if (!ps.includes(x)) ps.push(x); }));
+        if (ps.length) S.answers.problems = ps.slice(0, 3); else delete S.answers.problems;
+      }
       renderQuestion();
     } else {
       S.answers[q.id] = v;
       // zmiana ścieżki czyści odpowiedzi z drugiej gałęzi
-      if (q.id === 'path') { delete S.answers.modality; delete S.answers.problems; }
+      if (q.id === 'path') { delete S.answers.modality; delete S.answers.problems; delete S.answers.feel; }
       if (q.id === 'modality' && v !== 'unknown') delete S.answers.problems;
       renderQuestion();
       setTimeout(nextQuestion, reducedMotion ? 0 : 220);
@@ -219,11 +243,12 @@
   });
   $('#qNext').addEventListener('click', nextQuestion);
   $('#qSkip').addEventListener('click', () => {
-    delete S.answers[activeQuestions()[S.qIndex].id];
-    nextQuestion();
+    const list = activeQuestions(), last = S.qIndex >= list.length - 1;
+    delete S.answers[list[S.qIndex].id];
+    if (last) startMatching(); else { S.qIndex++; renderQuestion(); }
   });
   $('#quizBack').addEventListener('click', () => {
-    if (S.qIndex === 0) { back(); return; }
+    if (S.qIndex === 0) { if (S.fill) show('review', false); else back(); return; }
     S.qIndex--; renderQuestion();
   });
 
@@ -248,28 +273,48 @@
   };
   const hits = (text, map) => Object.keys(map).filter(k => map[k].test(text));
 
+  const LABELS = {
+    mood: 'samopoczuc', problems: 'problem', symptoms: 'objaw', goals: 'cele', modality: 'nurt', gender: 'plec', age: 'wiek',
+    style: 'styl', tone: 'ton', who: 'kim jestem', values: 'wazne', history: 'doswiadczen', avoid: 'unikac',
+    urgency: 'pilnosc', time: 'termin', summary: 'zdaniach'
+  };
+  // Dzieli odpowiedź czatu na pola. Znosi markdown (**POLE:**), listy i wartości w kilku liniach.
+  function sections(raw) {
+    const out = {}; let cur = null;
+    raw.split('\n').forEach(line => {
+      const clean = line.replace(/[*#_`>]/g, '').trim();
+      const m = clean.match(/^[-\d.\s]*([^:]{2,40}):\s*(.*)$/);
+      const key = m && Object.keys(LABELS).find(k => norm(m[1]).includes(LABELS[k]));
+      if (key && !(key in out)) { cur = key; out[key] = m[2]; }
+      else if (cur && clean) out[cur] += ' ' + clean;
+    });
+    return out;
+  }
+
   function parseChatAnswer(raw) {
-    const text = norm(raw);
-    const field = label => {
-      const m = text.match(new RegExp('(?:^|\\n)[^\\n:]*' + label + '[^\\n:]*:(.*)'));
-      return m ? m[1] : null;
-    };
-    const one = (label, map) => { const f = field(label); if (f == null) return null; const h = hits(f, map); return h.length === 1 ? h[0] : null; };
+    const sec = sections(raw), all = norm(raw);
+    const f = k => sec[k] != null ? norm(sec[k]) : null;
+    const one = k => { const v = f(k); if (v == null) return null; const h = hits(v, RX[k]); return h.length === 1 ? h[0] : null; };
     const a = {};
 
     // problemy i nurt: z pola, a gdy czat zignorował format, z całej odpowiedzi
-    let problems = hits(field('problem') != null ? field('problem') : text, RX.problems);
+    let problems = hits(f('problems') != null ? f('problems') : all, RX.problems);
     if (problems.length > 4) problems = [];            // nieuzupełniony szablon
     if (problems.length) a.problems = problems.slice(0, 3);
-    const mods = hits(field('nurt') != null ? field('nurt') : text, RX.modality);
+    const mods = hits(f('modality') != null ? f('modality') : all, RX.modality);
     if (mods.length === 1) a.modality = mods[0];
 
-    ['gender', 'age', 'style', 'tone', 'time'].forEach(k => {
-      const label = { gender: 'plec', age: 'wiek', style: 'styl', tone: 'ton', time: 'termin' }[k];
-      const v = one(label, RX[k]); if (v) a[k] = v;
-    });
-    const vf = field('wazne');
-    if (vf != null) { const v = hits(vf, RX.values); if (v.length && v.length < 6) a.values = v; }
+    ['gender', 'age', 'style', 'tone', 'time'].forEach(k => { const v = one(k); if (v) a[k] = v; });
+    if (f('values') != null) { const v = hits(f('values'), RX.values); if (v.length && v.length < 6) a.values = v; }
+
+    // kontekst życiowy z całego tekstu: tu czat wie najwięcej
+    const ctx = Object.keys(CONTEXTS).filter(k => CONTEXTS[k].rx.test(all));
+    if (ctx.length) a.contexts = ctx;
+
+    const num = k => { const m = (sec[k] || '').match(/[1-5](?:[.,]\d)?/); return m ? parseFloat(m[0].replace(',', '.')) : null; };
+    const urgency = num('urgency');
+    if (!a.time && urgency >= 4) a.time = 'asap';
+    S.profile = { mood: num('mood'), urgency, goals: sec.goals || '', who: sec.who || '', avoid: sec.avoid || '', summary: sec.summary || '', fields: Object.keys(sec).length };
     return a;
   }
 
@@ -297,8 +342,37 @@
     }
     err.hidden = true;
     S.answers = a;
-    startMatching();
+    renderReview();
+    show('review');
   });
+
+  /* ---------- podsumowanie odpowiedzi czatu ---------- */
+  const FOLLOW_UP = { gender: 'płeć terapeuty', age: 'wiek terapeuty', style: 'styl pracy', tone: 'ton rozmowy', time: 'terminy' };
+  function renderReview() {
+    const a = S.answers, p = S.profile || {};
+    const group = (label, items) => items.length ? `<div class="rv"><p class="label">${label}</p><ul class="chips">${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>` : '';
+    const quote = (label, text) => text ? `<div class="rv"><p class="label">${label}</p><p class="rv-quote">${esc(text.length > 260 ? text.slice(0, 257) + '…' : text)}</p></div>` : '';
+    const stars = n => '★★★★★'.slice(0, Math.round(n)) + '☆☆☆☆☆'.slice(0, 5 - Math.round(n));
+    const missing = Object.keys(FOLLOW_UP).filter(k => !a[k]);
+    S.missing = missing;
+    $('#reviewBody').innerHTML =
+      (p.mood ? `<div class="mood"><div><span class="mood-n">${String(p.mood).replace('.', ',')}</span><span class="mood-of">/ 5</span></div><span class="stars">${stars(p.mood)}</span><span class="mood-t">Tak oceniasz swoje samopoczucie. Szukamy kogoś, kto pomoże dojść do 5.</span></div>` : '') +
+      group('Z czym przychodzisz', (a.problems || []).map(x => PROBLEMS[x].label)) +
+      group('Nurt', a.modality ? [MODALITIES[a.modality].label] : []) +
+      group('Jak chcesz pracować', [a.style && { directive: 'narzędzia i zadania', exploratory: 'spokojna rozmowa', mixed: 'styl mieszany' }[a.style], a.tone && (a.tone === 'warm' ? 'ciepły ton' : 'bezpośredni ton')].filter(Boolean)) +
+      group('Szukamy doświadczenia w pracy z', (a.contexts || []).map(c => CONTEXTS[c].label).concat((a.values || []).map(v => VALUES[v].toLowerCase()))) +
+      quote('Twoje cele', p.goals) + quote('Czego unikać', p.avoid) + quote('Własnymi słowami', p.summary);
+    $('#reviewMissing').textContent = missing.length
+      ? 'Czat nie wiedział: ' + missing.map(k => FOLLOW_UP[k]).join(', ') + '.'
+      : 'Mamy komplet. Nie musisz niczego dopowiadać.';
+    $('#reviewFill').hidden = !missing.length;
+    $('#reviewFill').textContent = missing.length === 1 ? 'Doprecyzuj (1 pytanie)' : `Doprecyzuj (${missing.length} pytania)`;
+    if (missing.length >= 5) $('#reviewFill').textContent = `Doprecyzuj (${missing.length} pytań)`;
+    $('#reviewGo').className = missing.length ? 'btn btn-link' : 'btn btn-primary';
+    $('#reviewGo').textContent = missing.length ? 'Pomiń i pokaż terapeutów' : 'Pokaż terapeutów';
+  }
+  $('#reviewFill').addEventListener('click', () => startQuiz(S.missing));
+  $('#reviewGo').addEventListener('click', startMatching);
 
   /* ---------- terminy ---------- */
   const DAY = 86400000;
@@ -340,6 +414,7 @@
     if (a.style && (t.style === a.style || t.style === 'mixed')) { s += t.style === a.style ? 9 : 4; if (t.style === a.style && a.style !== 'mixed') why.push(a.style === 'directive' ? 'narzędzia i zadania' : 'spokojna rozmowa'); }
     if (a.tone && t.tone === a.tone) { s += 8; why.push(a.tone === 'warm' ? 'ciepły ton' : 'mówi wprost'); }
     (a.values || []).forEach(v => { if (t.values.includes(v)) { s += 6; why.push(VALUES[v].toLowerCase()); } });
+    (a.contexts || []).forEach(c => { if (t.contexts.includes(c)) { s += 5; why.push(CONTEXTS[c].label); } });
     if (a.time === 'evenings' && t.evenings) { s += 7; why.push('wieczory'); }
     if (a.time === 'weekends' && t.weekends) { s += 7; why.push('weekendy'); }
     if (a.time === 'asap') s += Math.max(0, 8 - t.firstDay * 2);
@@ -363,6 +438,7 @@
     if (a.style) out.push({ directive: 'narzędzia i zadania', exploratory: 'spokojna rozmowa', mixed: 'styl mieszany' }[a.style]);
     if (a.tone) out.push(a.tone === 'warm' ? 'ciepły ton' : 'bezpośredni ton');
     (a.values || []).forEach(v => out.push(VALUES[v].toLowerCase()));
+    (a.contexts || []).forEach(c => out.push(CONTEXTS[c].label));
     if (a.time && a.time !== 'any') out.push({ asap: 'jak najszybciej', evenings: 'wieczory', weekends: 'weekendy' }[a.time]);
     return out;
   }
@@ -546,4 +622,7 @@
 
   initHero();
   initDots();
+  const route = () => { if ((location.hash || '') === '#jak-dziala') show('how'); };
+  window.addEventListener('hashchange', route);
+  route();
 })();

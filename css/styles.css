@@ -321,3 +321,42 @@ textarea:focus, .composer input:focus, #nameInput:focus { outline: none; border-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- podsumowanie odpowiedzi czatu ---------- */
+.review { display: flex; flex-direction: column; gap: 16px; }
+.rv { display: flex; flex-direction: column; gap: 6px; }
+.rv-quote { padding: 12px 14px; border-radius: 14px; background: var(--ink); color: var(--muted); font-size: 15px; overflow-wrap: anywhere; }
+.mood { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 4px 14px; padding: 14px 16px; border-radius: var(--r); background: var(--ink-2); }
+.mood-n { font: 800 40px/1 var(--display); font-variant-numeric: tabular-nums; }
+.mood-of { color: var(--muted); margin-left: 4px; }
+.mood .stars { font-size: 20px; }
+.mood-t { grid-column: 1 / -1; font-size: 14px; color: var(--muted); }
+.quiz-foot--col { flex-direction: column; gap: 2px; }
+.quiz-foot--col .btn-primary { flex: none; }
+
+/* ---------- jak to działa ---------- */
+.how-in { display: flex; flex-direction: column; gap: 40px; padding: 12px var(--gut-r) 44px var(--gut-l); }
+.how-hero, .how-block { display: flex; flex-direction: column; gap: 14px; }
+.how h2 { font: 800 23px/1.12 var(--display); letter-spacing: -.015em; text-wrap: balance; }
+.how p { color: var(--muted); }
+.how-count { display: flex; align-items: baseline; gap: 10px; font-variant-numeric: tabular-nums; }
+.how-count b { font: 800 26px/1 var(--display); color: var(--muted); }
+.how-count b.is-on { font-size: 44px; color: var(--sun); }
+.how-count i { font-style: normal; color: var(--muted); }
+.how-steps { display: flex; flex-direction: column; gap: 12px; }
+.how-steps > li { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 22px; background: var(--ink); }
+.how-num { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; background: var(--grad); color: var(--on-sun); font: 800 18px/1 var(--display); }
+.how-ranks { display: flex; gap: 6px; }
+.how-block--rec { padding: 18px; border-radius: 22px; border: 1.5px solid var(--sun); background: linear-gradient(160deg, rgba(255, 122, 92, .16), rgba(255, 197, 51, .06)), var(--ink); align-items: flex-start; }
+.how-vs { align-self: stretch; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.how-vs div { display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 14px; background: rgba(14, 11, 32, .5); font-size: 14px; color: var(--muted); }
+.how-vs b { font: 800 18px/1.1 var(--display); color: var(--text); }
+.how-vs .is-on { background: var(--sun); color: var(--on-sun); }
+.how-vs .is-on b { color: var(--on-sun); }
+.weights { display: flex; flex-direction: column; gap: 10px; }
+.weights li { display: flex; flex-direction: column; gap: 5px; font-size: 14px; }
+.weights i { height: 8px; width: var(--w); border-radius: 8px; background: var(--grad); }
+.how details { border-bottom: 1px solid var(--line); padding: 4px 0; }
+.how summary { cursor: pointer; padding: 10px 0; font-weight: 600; }
+.how details p { padding-bottom: 12px; font-size: 15px; }
+.how-end { align-items: flex-start; }
