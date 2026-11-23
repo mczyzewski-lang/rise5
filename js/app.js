@@ -153,7 +153,7 @@
     function setStep(i) {
       cur = i;
       const b = steps[i], to = +b.dataset.n, from = lit;
-      steps.forEach(s => s.setAttribute('aria-pressed', String(s === b)));
+      steps.forEach((s, k) => { s.setAttribute('aria-pressed', String(s === b)); s.parentElement.classList.toggle('is-done', k < i); });
       $('#dotsLabel').textContent = b.dataset.label;
       cancelAnimationFrame(tween);
       if (reducedMotion || from === to) { lit = to; $('#dotsCount').textContent = to; draw(); return; }

@@ -422,3 +422,26 @@ textarea:focus, .composer input:focus, #nameInput:focus { outline: none; border-
 
 .step { transition: background-color .3s ease, border-color .3s ease, box-shadow .3s ease; }
 .dots-caption b { display: inline-block; min-width: 2.2ch; }
+
+/* ---------- kroki doboru: ponumerowana oś 1–4 ---------- */
+.steps { counter-reset: step; }
+.steps li { position: relative; counter-increment: step; }
+.step { grid-template-columns: 32px 1fr auto; column-gap: 14px; align-items: start; }
+.step::before {
+  content: counter(step); grid-column: 1; grid-row: 1 / span 2; position: relative; z-index: 1;
+  width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%;
+  background: var(--ink); border: 2px solid var(--line); color: var(--muted); font: 800 16px/1 var(--display);
+  transition: background-color .3s ease, border-color .3s ease, color .3s ease;
+}
+.step-t { grid-column: 2; grid-row: 1; padding-top: 4px; }
+.step-d { grid-column: 2; grid-row: 2; }
+.step-n { grid-column: 3; grid-row: 1 / span 2; text-align: right; min-width: 2.4ch; }
+.step-t::before { content: "Krok " counter(step); display: block; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+/* łącznik między kółkami */
+.steps li:not(:last-child)::after {
+  content: ""; position: absolute; left: 32.500px; top: 50px; bottom: -26px; width: 2px; border-radius: 2px;
+  background: var(--line); transition: background-color .3s ease;
+}
+.steps li.is-done::after { background: var(--accent); }
+.steps li.is-done .step::before { background: var(--accent); border-color: var(--accent); color: #fff; }
+.step[aria-pressed="true"]::before { background: var(--grad); border-color: transparent; color: var(--on-sun); }
