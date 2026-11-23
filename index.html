@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rise5</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Rise5. Poczuj się na 5. Znajdź najlepszego terapeutę dla siebie spośród 833 psychoterapeutów.">
+<meta name="theme-color" content="#14112B">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- 1. LANDING -->
+  <section class="screen landing" id="s-landing">
+    <div class="hero" id="hero">
+      <div class="mosaic mosaic--blur" aria-hidden="true"></div>
+      <div class="mosaic mosaic--sharp" aria-hidden="true"></div>
+      <div class="spot-ring" aria-hidden="true"></div>
+      <div class="hero-shade" aria-hidden="true"></div>
+
+      <div class="hero-card" id="heroCard">
+        <div class="logo logo--lg" aria-label="Rise5"><span class="logo-word">Rise</span><span class="logo-five">5</span></div>
+        <p class="motto">Poczuj się na 5</p>
+        <h1>Znajdź najlepszego terapeutę dla siebie</h1>
+        <h2 class="hero-sub">Przefiltruj spośród <b>833</b> psychoterapeutów</h2>
+        <button class="btn btn-primary" type="button" data-go="method">Rozpocznij</button>
+        <div class="grating" aria-label="Ocena Risify w Google">
+          <svg class="g-logo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.2 5.6c4.3-3.900 7.100-9.700 7.100-17.100z"/><path fill="#FBBC05" d="M10.500 28.700A14.500 14.500 0 0 1 9.500 24c0-1.600.300-3.200.900-4.700l-7.900-6.100A24 24 0 0 0 0 24c0 3.900.900 7.500 2.600 10.800l7.900-6.100z"/><path fill="#34A853" d="M24 48c6.500 0 11.900-2.100 15.900-5.800l-7.200-5.600c-2.100 1.400-4.900 2.300-8.700 2.300-6.300 0-11.600-4.100-13.500-9.800l-7.900 6.100C6.500 42.600 14.600 48 24 48z"/></svg>
+          <span class="g-score" id="gScore">4,9</span>
+          <span class="stars" aria-hidden="true">★★★★★</span>
+          <span class="g-label">Ocena Risify w Google</span>
+        </div>
+      </div>
+
+      <div class="media">
+        <p class="eyebrow">Wypowiadaliśmy się dla</p>
+        <ul class="media-list" id="mediaList"></ul>
+      </div>
+    </div>
+
+    <div class="below">
+      <div class="funnel">
+        <p class="eyebrow">Jak dobieramy</p>
+        <h2>Z 833 terapeutów do tego jednego</h2>
+        <canvas id="dots" class="dots" role="img" aria-label="833 kropki, każda to jeden psychoterapeuta. Podświetlone kropki pokazują, ilu zostaje po każdym kroku."></canvas>
+        <p class="dots-caption"><b id="dotsCount">833</b> <span id="dotsLabel">psychoterapeutów w bazie</span></p>
+        <ol class="steps" id="steps">
+          <li><button type="button" class="step" data-n="833" data-label="psychoterapeutów w bazie" aria-pressed="true">
+            <span class="step-n">833</span><span class="step-t">Cała baza</span>
+            <span class="step-d">Każdy psychoterapeuta, z którym pracujemy.</span></button></li>
+          <li><button type="button" class="step" data-n="96" data-label="pracuje na przykład z ADHD" aria-pressed="false">
+            <span class="step-n">96</span><span class="step-t">Ścieżka doboru</span>
+            <span class="step-d">Wybierasz rodzaj terapii (CBT, EMDR) albo problem, z którym przychodzisz, na przykład ADHD.</span></button></li>
+          <li><button type="button" class="step" data-n="8" data-label="pasuje do Ciebie" aria-pressed="false">
+            <span class="step-n">8</span><span class="step-t">Personalizacja</span>
+            <span class="step-d">Płeć, wiek, styl pracy, ton, przekonania, terminy.</span></button></li>
+          <li><button type="button" class="step" data-n="1" data-label="terapeuta, z którym zaczynasz" aria-pressed="false">
+            <span class="step-n">1</span><span class="step-t">Twój terapeuta</span>
+            <span class="step-d">Przeglądasz dopasowanych i rezerwujesz pierwszą sesję.</span></button></li>
+        </ol>
+      </div>
+
+      <div class="five">
+        <div class="five-pair" aria-hidden="true">
+          <div class="five-score five-score--low"><span>2,7</span><i>★★★☆☆</i></div>
+          <span class="five-arrow">→</span>
+          <div class="five-score"><span>4,8</span><i>★★★★★</i></div>
+        </div>
+        <h2>Poczuj się na 5</h2>
+        <p>Dobrze dobrany terapeuta to połowa terapii. Dobór zajmuje około dwóch minut.</p>
+        <button class="btn btn-primary" type="button" data-go="method">Rozpocznij</button>
+        <p class="fineprint">Rise5 to marka Risify.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. WYBÓR METODY -->
+  <section class="screen pad" id="s-method" hidden>
+    <header class="bar">
+      <button class="icon-btn" type="button" data-back aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="logo" aria-label="Rise5"><span class="logo-word">Rise</span><span class="logo-five">5</span></div>
+      <span class="bar-spacer"></span>
+    </header>
+    <div class="content">
+      <h1 class="title">Jak chcesz dobrać terapeutę?</h1>
+      <p class="lead">Oba sposoby kończą się listą dopasowanych terapeutów.</p>
+
+      <button class="choice choice--rec" type="button" data-go="prompt">
+        <span class="badge">Rekomendowane · lepsza precyzja</span>
+        <span class="choice-t">Prompt do ChatGPT lub innego czatu</span>
+        <span class="choice-d">Twój czat zna Cię z wielu rozmów. Skopiuj nasz prompt, wklej go do ChatGPT, Claude albo Gemini i przynieś odpowiedź.</span>
+        <span class="choice-m">Około 1 minuty</span>
+      </button>
+
+      <button class="choice" type="button" data-go="quiz">
+        <span class="choice-t">Odpowiedz na pytania</span>
+        <span class="choice-d">Najpierw ścieżka doboru, potem personalizacja. Każde pytanie o preferencje możesz pominąć.</span>
+        <span class="choice-m">8 pytań, około 2 minut</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- 3. PROMPT -->
+  <section class="screen pad" id="s-prompt" hidden>
+    <header class="bar">
+      <button class="icon-btn" type="button" data-back aria-label="Wróć"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="logo" aria-label="Rise5"><span class="logo-word">Rise</span><span class="logo-five">5</span></div>
+      <span class="bar-spacer"></span>
+    </header>
+    <div class="content">
+      <h1 class="title">Dobór przez Twój czat</h1>
+
+      <div class="pstep">
+        <p class="pstep-h"><span class="num">1</span> Skopiuj prompt i wklej go do swojego czatu</p>
+        <pre class="prompt-box" id="promptBox" tabindex="0"></pre>
+        <button class="btn btn-ghost" type="button" id="copyPrompt">Kopiuj prompt</button>
+      </div>
+
+      <div class="pstep">
+        <p class="pstep-h"><span class="num">2</span> Wklej tutaj odpowiedź czatu</p>
+        <label class="sr" for="gptAnswer">Odpowiedź czatu</label>
+        <textarea id="gptAnswer" rows="7" placeholder="PROBLEMY: …&#10;NURT: …"></textarea>
+        <p class="note">Zanim wkleisz, usuń wszystko, czego nie chcesz nam pokazywać.</p>
+        <p class="error" id="gptError" hidden></p>
+        <button class="btn btn-primary" type="button" id="gptSubmit">Dobierz terapeutę</button>
+        <button class="btn btn-link" type="button" id="gptSample">Wstaw przykładową odpowiedź</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. QUIZ -->
+  <section class="screen pad" id="s-quiz" hidden>
+    <header class="bar">
+      <button class="icon-btn" type="button" id="quizBack" aria-label="Poprzednie pytanie"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="stages">
+        <div class="stage" id="stage1"><span>1. Ścieżka</span><i><b></b></i></div>
+        <div class="stage" id="stage2"><span>2. Personalizacja</span><i><b></b></i></div>
+      </div>
+    </header>
+    <div class="content">
+      <p class="counter">Pasuje teraz <b id="quizCount">833</b> z 833 terapeutów</p>
+      <h1 class="title" id="qTitle"></h1>
+      <p class="lead" id="qHint"></p>
+      <div class="opts" id="qOpts"></div>
+    </div>
+    <footer class="quiz-foot">
+      <button class="btn btn-link" type="button" id="qSkip">Pomiń</button>
+      <button class="btn btn-primary" type="button" id="qNext">Dalej</button>
+    </footer>
+  </section>
+
+  <!-- 5. DOBIERANIE -->
+  <section class="screen pad matching" id="s-matching" hidden>
+    <div class="matching-in">
+      <p class="eyebrow">Filtrujemy bazę</p>
+      <p class="matching-n" id="matchN">833</p>
+      <p class="matching-t">psychoterapeutów pasuje do Ciebie</p>
+      <ul class="chips chips--center" id="matchChips"></ul>
+    </div>
+  </section>
+
+  <!-- 6. FEED TERAPEUTÓW -->
+  <section class="screen feed" id="s-feed" hidden>
+    <div class="feed-top">
+      <button class="icon-btn icon-btn--glass" type="button" data-go="method" aria-label="Zmień odpowiedzi"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="seg" role="tablist" aria-label="Sortowanie">
+        <button type="button" role="tab" data-sort="match" aria-selected="true">Najlepiej dopasowany</button>
+        <button type="button" role="tab" data-sort="avail" aria-selected="false">Najszybciej dostępny</button>
+      </div>
+    </div>
+    <div class="feed-list" id="feedList" tabindex="0"></div>
+    <div class="feed-pos" id="feedPos" aria-hidden="true"></div>
+  </section>
+
+  <!-- 7. KONTO: WIZYTY / CZAT -->
+  <section class="screen account" id="s-app" hidden>
+    <header class="acc-top">
+      <button class="avatar" type="button" id="avatarBtn" aria-label="Uzupełnij profil">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.5"/><path d="M5 20c1-4 4-5.500 7-5.500s6 1.500 7 5.500"/></svg>
+        <i>+</i>
+      </button>
+      <div class="acc-name">
+        <button type="button" class="name-btn" id="nameBtn">Twoje imię</button>
+        <label class="sr" for="nameInput">Twoje imię</label>
+        <input id="nameInput" type="text" maxlength="24" placeholder="Wpisz imię" autocomplete="given-name" hidden>
+        <span class="acc-sub" id="accSub">Uzupełnij profil</span>
+      </div>
+      <button class="icon-btn" type="button" id="accClose" aria-label="Wróć do terapeutów"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </header>
+
+    <div class="acc-body" id="accBody"></div>
+
+    <form class="composer" id="composer" hidden>
+      <label class="sr" for="msgInput">Wiadomość</label>
+      <input id="msgInput" type="text" placeholder="Napisz wiadomość" autocomplete="off">
+      <button class="send" type="submit" aria-label="Wyślij"><svg viewBox="0 0 24 24"><path d="M4 12l16-7-6 16-3-6z"/></svg></button>
+    </form>
+
+    <nav class="tabs" id="tabs">
+      <button type="button" data-tab="visits" aria-current="false">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Wizyty</button>
+      <button type="button" data-tab="chat" aria-current="false">
+        <svg viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg>Czat</button>
+    </nav>
+  </section>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+</div>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
